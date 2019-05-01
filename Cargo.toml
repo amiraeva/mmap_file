@@ -1,0 +1,9 @@
+[package]
+name = "mmap_file"
+version = "0.1.0"
+authors = ["Amer Safdari <amersafdari@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+memmap = "0.7"
+log = "0.4"
