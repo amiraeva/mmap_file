@@ -71,7 +71,7 @@ impl MmappedFile<MmapMut> {
 		Ok(())
 	}
 
-	pub fn as_write(&mut self) -> MmappedWriter {
+	pub fn as_writer(self) -> MmappedWriter {
 		let inner = self;
 		let pos = 0;
 
@@ -79,12 +79,12 @@ impl MmappedFile<MmapMut> {
 	}
 }
 
-pub struct MmappedWriter<'a> {
-	inner: &'a mut MmappedFile<MmapMut>,
+pub struct MmappedWriter {
+	inner: MmappedFile<MmapMut>,
 	pos: usize,
 }
 
-impl MmappedWriter<'_> {
+impl MmappedWriter {
 	fn resize(&mut self, new_len: usize) -> io::Result<()> {
 		log::trace!("resizing mmapped file to {} bytes", new_len);
 
@@ -104,7 +104,7 @@ impl MmappedWriter<'_> {
 	}
 }
 
-impl Write for MmappedWriter<'_> {
+impl Write for MmappedWriter {
 	fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
 
 		while let Err(e) = self.generate_cursor().write_all(&buf) {
@@ -130,10 +130,10 @@ impl Write for MmappedWriter<'_> {
 	}
 }
 
-impl Drop for MmappedWriter<'_> {
+impl Drop for MmappedWriter {
 	fn drop(&mut self) {
 		if let Err(e) = self.inner.resize(self.pos as _) {
-			log::error!("error when dropping MmappedWriter: {}", e)
+			log::error!("error when dropping MmappedWriter '{}'", e)
 		} else {
 			log::trace!(
 				"dropping mmapped file writer, truncating to '{}' bytes",
