@@ -7,6 +7,9 @@ use std::{
 	path::Path,
 };
 
+pub type MmapFile = MmappedFile<Mmap>;
+pub type MmapMutFile = MmappedFile<MmapMut>;
+
 pub struct MmappedFile<M>
 where
 	M: AsRef<[u8]> + Deref<Target = [u8]>,
@@ -22,9 +25,13 @@ where
 	pub fn len(&self) -> io::Result<u64> {
 		Ok(self.file.metadata()?.len())
 	}
+
+	pub fn is_empty(&self) -> io::Result<bool> {
+		Ok(self.len()? == 0)
+	}
 }
 
-impl MmappedFile<Mmap> {
+impl MmapFile {
 	pub unsafe fn open<P: AsRef<Path>>(path: P) -> io::Result<Self> {
 		log::info!("Opening memory mapped file '{}'", path.as_ref().display());
 
@@ -41,7 +48,7 @@ impl MmappedFile<Mmap> {
 	}
 }
 
-impl MmappedFile<MmapMut> {
+impl MmapMutFile {
 	pub unsafe fn create_with_size(path: &Path, size: usize) -> io::Result<Self> {
 		log::info!("Creating memory mapped file '{}'", path.display());
 
@@ -71,7 +78,7 @@ impl MmappedFile<MmapMut> {
 		Ok(())
 	}
 
-	pub fn as_writer(self) -> MmappedWriter {
+	pub fn into_writer(self) -> MmappedWriter {
 		let inner = self;
 		let pos = 0;
 
@@ -125,7 +132,8 @@ impl Write for MmappedWriter {
 	}
 
 	fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
-		self.write(&buf)?;
+		// write already forces a write_all
+		let _ = self.write(&buf)?;
 		Ok(())
 	}
 }
