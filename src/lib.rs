@@ -52,11 +52,7 @@ impl MmapMutFile {
 	pub unsafe fn create_with_size(path: &Path, size: usize) -> io::Result<Self> {
 		log::info!("Creating memory mapped file '{}'", path.display());
 
-		let file = OpenOptions::new()
-			.read(true)
-			.write(true)
-			.create_new(true)
-			.open(&path)?;
+		let file = OpenOptions::new().read(true).write(true).open(&path)?;
 
 		file.set_len(size as _)?;
 		let map = MmapMut::map_mut(&file)?;
